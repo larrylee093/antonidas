@@ -2,3 +2,7 @@
 /permdir
 /dev.yaml
 /syncdb_dumps.bak
+*.pyc
+*.pyo
+*.swp
+*.edit
