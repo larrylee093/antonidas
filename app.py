@@ -5,10 +5,9 @@ import logging
 import config
 
 from flask import Flask, redirect, url_for
-
 from sheep.api.sessions import SessionMiddleware, FilesystemSessionStore
 
-from models import *
+from models import init_db
 from views.api import api
 
 logger = logging.getLogger(__name__)
@@ -28,10 +27,10 @@ app.register_blueprint(api, url_prefix='/api')
 
 init_db(app)
 
-app.wsgi_app = SessionMiddleware(app.wsgi_app, \
-        FilesystemSessionStore(), \
-        cookie_name=config.SESSION_KEY, \
-        cookie_path='/',\
+app.wsgi_app = SessionMiddleware(app.wsgi_app,
+        FilesystemSessionStore(),
+        cookie_name=config.SESSION_KEY,
+        cookie_path='/',
         cookie_domain=config.SESSION_COOKIE_DOMAIN)
 
 @app.route('/')
