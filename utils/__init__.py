@@ -1,9 +1,9 @@
 # -*- coding:utf-8 -*-
-import inspector
+from inspector import getargspec
 from functools import wraps
 
 def check_user(f):
-    an, av, kw, d = inspector.getargspec()
+    an, av, kw, d = getargspec()
     @wraps(f)
     def _(*a, **kw):
         _a = dict(zip(an, a))

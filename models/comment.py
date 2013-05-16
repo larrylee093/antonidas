@@ -3,7 +3,8 @@ import marshal
 from datetime import datetime
 
 from models import db, desc
-from models.base import BaseComment, DictMixin
+from models.base import BaseComment
+from models.mixin.dictionary import DictMixin
 from models.consts import (PRIVACY_MAPPING, CAN_VIEW_ALL, CAN_VIEW_FRIENDS,
         CAN_VIEW_NONE, CAN_VIEW_SELF)
 

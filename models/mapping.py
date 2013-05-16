@@ -1,6 +1,7 @@
 # -*- coding:utf-8 -*-
 from models import db, IntegrityError
-from models.base import BaseMapping, DictMixin
+from models.base import BaseMapping
+from models.mixin.dictionary import DictMixin
 
 class Mapping(db.Model, BaseMapping, DictMixin):
     __tablename__ = 'mapping'
