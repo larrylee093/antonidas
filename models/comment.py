@@ -1,13 +1,16 @@
 # -*- coding:utf-8 -*-
+import marshal
 from datetime import datetime
 
 from models import db, desc
 from models.base import BaseComment
-from models.consts import CAN_VIEW_ALL, CAN_VIEW_FRIENDS, CAN_VIEW_NONE, CAN_VIEW_SELF
+from models.consts import (PRIVACY_MAPPING, CAN_VIEW_ALL, CAN_VIEW_FRIENDS,
+        CAN_VIEW_NONE, CAN_VIEW_SELF)
 
 class Comment(db.Model, BaseComment):
     __tablename__ = 'comment'
-    __table_args__ = (db.Index('type_target_id_author_id', 'type', 'target_id', 'author_id'), )
+    _likers = db.Column('likers', db.Binary, nullable=True)
+    __table_args__ = (db.Index('type_target_author', 'type', 'target_id', 'author_id'), )
 
     def __init__(self, target_id, author_id, text, time, ref_id, type, privacy, likers):
         self.target_id = target_id
@@ -17,7 +20,7 @@ class Comment(db.Model, BaseComment):
         self.ref_id = ref_id
         self.type = type
         self.privacy = privacy
-        self.likers = likers
+        self._likers = likers
 
     @classmethod
     def get(cls, id):
@@ -28,7 +31,8 @@ class Comment(db.Model, BaseComment):
         return [cls.get(i) for i in ids]
 
     @classmethod
-    def add(cls, target_id, author_id, text, type, ref_id=0, privacy=CAN_VIEW_ALL, likers=[]):
+    def add(cls, target_id, author_id, text, type, ref_id, privacy, likers):
+        likers = marshal.dumps(likers)
         c = cls(target_id, author_id, text, datetime.now(), ref_id, type, privacy, likers)
         db.session.add(c)
         db.session.commit()
@@ -79,7 +83,27 @@ class Comment(db.Model, BaseComment):
         pass
 
     def to_dict(self):
-        pass
+        d = {
+            'id': self.id,
+            'target_id': self.target_id,
+            'author_id': self.author_id,
+            'text': self.text,
+            'ref_id': self.ref_id,
+            'time': self.time.strftime('%Y-%m-%d %H:%M:%S'),
+            'privacy': PRIVACY_MAPPING.get(self.privacy, '')
+            }
+        if self._likers:
+            d['likers'] = self.likers
+            d['n_likers'] = self.n_likers
+        return d
+
+    @property
+    def likers(self):
+        return marshal.loads(self._likers) if self._likers else []
+
+    @property
+    def n_likers(self):
+        return len(self.likers)
 
 def get_comment(id):
     return Comment.get(id)
@@ -87,11 +111,19 @@ def get_comment(id):
 def get_comments(ids):
     return Comment.gets(ids)
 
-def add_comment(author_id, target_id, text, type, ref_id=0):
-    return Comment.add(target_id, author_id, text, type, ref_id)
+def add_comment(target_id, author_id, text, type, ref_id, privacy, likers):
+    return Comment.add(target_id, author_id, text, type, ref_id, privacy, likers)
     
-def get_comment_by_app(type, target_id, start, limit):
+def get_comment_by_type(type, target_id, start, limit):
+    '''某入口下的评论'''
     query = Comment.get_ids().filter_by(type=type, target_id=target_id).order_by(desc(Comment.id))
+    rs = query.offset(start).limit(limit).all()
+    n = query.count()
+    return n, [r for r, in rs]
+
+def get_comment_by_user(type, target_id, user_id, start, limit):
+    '''只看楼主(其实随便哪个都可以啦)'''
+    query = Comment.get_ids().filter_by(type=type, target_id=target_id, author_id=author_id).order_by(desc(Comment.id))
     rs = query.offset(start).limit(limit).all()
     n = query.count()
     return n, [r for r, in rs]

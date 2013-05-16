@@ -11,7 +11,6 @@ class BaseComment(object):
     ref_id = db.Column('ref_id', db.Integer, default=0)
     type = db.Column('type', db.Integer, nullable=False)
     privacy = db.Column('privacy', db.Integer, nullable=False)
-    likers = db.Column('likers', db.Integer, nullable=False)
 
 class BaseMapping(object):
     id = db.Column('id', db.Integer, primary_key=True, autoincrement=True)

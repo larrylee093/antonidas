@@ -1,9 +1,10 @@
 # -*- coding:utf-8 -*-
-from models import db
+from models import db, IntegrityError
 from models.base import BaseMapping
 
 class Mapping(db.Model, BaseMapping):
     __tablename__ = 'mapping'
+    __table_args__ = (db.UniqueConstraint('app', name='uk_app'),)
 
     def __init__(self, app):
         self.app = app
@@ -11,8 +12,12 @@ class Mapping(db.Model, BaseMapping):
     @classmethod
     def register(cls, app):
         mapping = cls(app)
-        db.session.add(mapping)
-        db.session.commit()
+        try:
+            db.session.add(mapping)
+            db.session.commit()
+        except IntegrityError:
+            db.session.rollback()
+            return None
         return mapping.id
 
     def delete(self):

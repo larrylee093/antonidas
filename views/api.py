@@ -1,9 +1,9 @@
 # -*- coding:utf-8 -*-
 
 from flask import Blueprint, abort, request, jsonify
-from models.comment_mapping import register_app
-from models.dispatcher import GateKeeper
+from models.mapping import register_app
 from models.comment import get_comment
+from models.dispatcher import DalaranKeeper
 
 api = Blueprint('api', __name__)
 
@@ -18,23 +18,18 @@ def add_comment():
     target = request.args.get('t')
     app = request.args.get('app')
     text = request.args.get('e')
-    r = GateKeeper.add_comment(app, int(author), int(target), text)
+    r = DalaranKeeper.add_comment(app, int(author), int(target), text, likers=[111111111,222222222222,33333333333])
     return jsonify(r)
 
 @api.route('/comment/<int:cid>/')
 def comment(cid):
     c = get_comment(cid)
-    r = {
-        'id': c.id,
-        'text': c.text,
-        'author': c.author,
-        'ref_id': c.ref_id,
-        'type': c.type
-        }
-    return jsonify(r)
+    return jsonify(c.to_dict())
 
 @api.route('/register/<app>/')
 def register(app):
     r = register_app(app)
+    if not r:
+        r = {'error': 'exists'}
     return str(r)
 
