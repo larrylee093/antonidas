@@ -3,14 +3,16 @@ import marshal
 from datetime import datetime
 
 from models import db, desc
-from models.base import BaseComment
+from models.base import BaseComment, DictMixin
 from models.consts import (PRIVACY_MAPPING, CAN_VIEW_ALL, CAN_VIEW_FRIENDS,
         CAN_VIEW_NONE, CAN_VIEW_SELF)
 
-class Comment(db.Model, BaseComment):
+class Comment(db.Model, BaseComment, DictMixin):
     __tablename__ = 'comment'
     _likers = db.Column('likers', db.Binary, nullable=True)
     __table_args__ = (db.Index('type_target_author', 'type', 'target_id', 'author_id'), )
+    __dict_keys__ = ('id', 'target_id', 'author_id', 'text', 'time',
+            'ref_id', 'likers', 'n_likers')
 
     def __init__(self, target_id, author_id, text, time, ref_id, type, privacy, likers):
         self.target_id = target_id
@@ -87,20 +89,8 @@ class Comment(db.Model, BaseComment):
         db.session.query(self.__class__).filter_by(id=self.id).update(dict(likers=self._likers))
         db.session.commit()
 
-    def to_dict(self):
-        d = {
-            'id': self.id,
-            'target_id': self.target_id,
-            'author_id': self.author_id,
-            'text': self.text,
-            'ref_id': self.ref_id,
-            'time': self.time.strftime('%Y-%m-%d %H:%M:%S'),
-            'privacy': PRIVACY_MAPPING.get(self.privacy, '')
-            }
-        if self._likers:
-            d['likers'] = self.likers
-            d['n_likers'] = self.n_likers
-        return d
+    def __to_dict__(self):
+        return {'privacy': PRIVACY_MAPPING.get(self.privacy, '')}
 
     @property
     def likers(self):

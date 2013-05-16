@@ -12,6 +12,6 @@ PER_PAGE = 10
 
 TIME_FORMAT = [u'%Y-%m-%d %H:%M', u'%Y-%m-%d %H:%M:%S', u'%Y年%m月%d日%H:%M', u'%Y年%m月%d日 %H:%M']
 
-admins = ['luoruici', 'aixiaowan', 'hnubbs']
+admins = ['tonicbupt']
 
 DOMAIN = 'http://job.xiaomen.co'

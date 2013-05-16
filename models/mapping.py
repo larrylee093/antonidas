@@ -1,10 +1,11 @@
 # -*- coding:utf-8 -*-
 from models import db, IntegrityError
-from models.base import BaseMapping
+from models.base import BaseMapping, DictMixin
 
-class Mapping(db.Model, BaseMapping):
+class Mapping(db.Model, BaseMapping, DictMixin):
     __tablename__ = 'mapping'
     __table_args__ = (db.UniqueConstraint('app', name='uk_app'),)
+    __dict_keys__ = ('id', 'app')
 
     def __init__(self, app):
         self.app = app
@@ -37,9 +38,6 @@ class Mapping(db.Model, BaseMapping):
     def get_by_id(cls, id):
         m = cls.query.get(id)
         return m or None
-
-    def to_dict(self):
-        return dict(id=self.id, app=self.app)
 
 def get_mapping(app):
     return Mapping.get(app)
