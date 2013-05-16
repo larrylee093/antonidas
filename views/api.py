@@ -7,10 +7,23 @@ from models.dispatcher import DalaranKeeper
 
 api = Blueprint('api', __name__)
 
+TEST_PAGE = """\
+<!DOCTYPE HTML>
+<html lang="en">
+  <head>
+    <script type="text/javascript" src="http://code.jquery.com/jquery-1.4.1.min.js">
+    </script>
+    <meta charset="UTF-8">
+    <title></title>
+  </head>
+  <body>
+  </body>
+</html>
+"""
+
 @api.route('/')
 def index():
-    d = dict([(k, k) for k in globals().keys()])
-    return jsonify(d)
+    return TEST_PAGE
 
 @api.route('/add_comment/')
 def add_comment():
@@ -18,7 +31,7 @@ def add_comment():
     target = request.args.get('t')
     app = request.args.get('app')
     text = request.args.get('e')
-    r = DalaranKeeper.add_comment(app, int(author), int(target), text, likers=[111111111,222222222222,33333333333])
+    r = DalaranKeeper.add_comment(app, int(author), int(target), text, likers=[1,2,3])
     return jsonify(r)
 
 @api.route('/comment/<int:cid>/')

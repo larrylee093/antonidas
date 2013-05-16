@@ -79,8 +79,13 @@ class Comment(db.Model, BaseComment):
         #TODO 补上get_user
         pass
 
-    def like(self):
-        pass
+    def like(self, user_id):
+        if user_id in self.likers or user_id == self.author_id:
+            return
+        likers = self.likers.append(user_id)
+        self._likers = marshal.dumps(likers)
+        db.session.query(self.__class__).filter_by(id=self.id).update(dict(likers=self._likers))
+        db.session.commit()
 
     def to_dict(self):
         d = {
