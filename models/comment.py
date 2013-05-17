@@ -78,6 +78,9 @@ class Comment(db.Model, BaseComment, DictMixin):
         db.session.query(self.__class__).filter_by(id=self.id).update(dict(privacy=privacy))
         db.session.commit()
 
+    def ref_comment(self):
+        return get_comment(self.ref_id) if self.ref_id else None
+
     def author(self):
         #TODO 补上get_user
         pass
