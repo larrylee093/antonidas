@@ -1,6 +1,9 @@
 # -*- coding:utf-8 -*-
 
 from flask import Blueprint, abort, request, jsonify
+
+from sheep.api.users import generate_login_url
+
 from models.mapping import register_app
 from models.comment import get_comment
 from models.dispatcher import DalaranKeeper
@@ -17,9 +20,10 @@ TEST_PAGE = """\
     <title></title>
   </head>
   <body>
+    <a href="%s">点我登录</a>
   </body>
 </html>
-"""
+""" % generate_login_url()
 
 @api.route('/')
 def index():

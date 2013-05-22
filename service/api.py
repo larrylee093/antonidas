@@ -2,12 +2,12 @@
 import app
 
 from models.dispatcher import DalaranKeeper
-from models.comment import get_comment, get_comments
+from models.comment import get_comment, get_comments as get_comments_c
 from models.consts import CAN_VIEW_ALL
 
 def add_comment(app, target, author, text,
-        ref_cid=0, privacy=CAN_VIEW_ALL, likers=[]):
-    c = DalaranKeeper.add_comment(app, target, author, text, ref_cid=ref_cid,
+        ref_id=0, privacy=CAN_VIEW_ALL, likers=[]):
+    c = DalaranKeeper.add_comment(app, target, author, text, ref_id=ref_id,
             privacy=privacy, likers=likers)
     return c.to_dict() if c else dict()
 
@@ -21,7 +21,7 @@ def del_comment(author, cid):
 def get_comments(app, target, start, limit):
     n, rs = DalaranKeeper.get_comments(app, target, start, limit)
     more = len(rs) == limit
-    comments = get_comments(rs)
+    comments = get_comments_c(rs)
     comments = [c.to_dict() for c in comments if c]
     return dict(total=n, app=app, target=target, more=more, comments=comments)
 

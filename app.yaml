@@ -6,3 +6,12 @@ api_version: 1
 handlers:
 - url: /.*
   wsgi_app: app:app
+
+services:
+- name: service.api
+  handler: add_comment
+  handler: del_comment
+  handler: get_comments
+  handler: register 
+  handler: unregister 
+  handler: has_registered 

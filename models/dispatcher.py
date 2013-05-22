@@ -19,28 +19,27 @@ class Dispatcher(object):
             m = get_mapping(app)
             if m:
                 self._add_mapping(m.id, app)
+                m = m.id
             else:
                 raise DispatchException('no mapping found')
-        return m.id
+        return m
 
     def add_comment(self, app, target, author, text, ref_id=0, privacy=CAN_VIEW_ALL, likers=[]):
         m = self._get_mapping(app)
-        c = add_comment(target, author, text, m, ref_id=ref_id,
+        return add_comment(target, author, text, m, ref_id=ref_id,
                 privacy=privacy, likers=likers)
-        r = {'r': 'ok'}
-        return r
 
     def get_comments(self, app, target, start, limit):
         m = self._get_mapping(app)
         return get_comment_by_type(m, target, start, limit)
 
-    def register(app):
+    def register(self, app):
         return register_app(app)
 
-    def unregister(app):
+    def unregister(self, app):
         unregister_app(app)
 
-    def has_registered(app):
+    def has_registered(self, app):
         return has_registered(app)
 
 
