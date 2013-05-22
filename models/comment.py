@@ -2,6 +2,8 @@
 import marshal
 from datetime import datetime
 
+from sheep.api.users import get_user
+
 from models import db, desc
 from models.base import BaseComment
 from models.mixin.dictionary import DictMixin
@@ -15,7 +17,8 @@ class Comment(db.Model, BaseComment, DictMixin):
     __dict_keys__ = ('id', 'target_id', 'author_id', 'text', 'time',
             'ref_id', 'likers', 'n_likers')
 
-    def __init__(self, target_id, author_id, text, time, ref_id, type, privacy, likers):
+    def __init__(self, target_id, author_id, text, time, type,
+            ref_id=0, privacy=CAN_VIEW_ALL, likers=[]):
         self.target_id = target_id
         self.author_id = author_id
         self.text = text
@@ -36,7 +39,8 @@ class Comment(db.Model, BaseComment, DictMixin):
     @classmethod
     def add(cls, target_id, author_id, text, type, ref_id, privacy, likers):
         likers = marshal.dumps(likers)
-        c = cls(target_id, author_id, text, datetime.now(), ref_id, type, privacy, likers)
+        c = cls(target_id, author_id, text, datetime.now(), type,
+                ref_id=ref_id, privacy=privacy, likers=likers)
         db.session.add(c)
         db.session.commit()
         return c
@@ -52,7 +56,7 @@ class Comment(db.Model, BaseComment, DictMixin):
         db.session.commit()
 
     def can_view(self, visitor_id):
-        #TODO 补上get_user
+        # TODO 现在存在relationship咩
         return True
 
     @property
@@ -82,8 +86,7 @@ class Comment(db.Model, BaseComment, DictMixin):
         return get_comment(self.ref_id) if self.ref_id else None
 
     def author(self):
-        #TODO 补上get_user
-        pass
+        return get_user(self.author_id)
 
     def like(self, user_id):
         if user_id in self.likers or user_id == self.author_id:
@@ -111,7 +114,8 @@ def get_comments(ids):
     return Comment.gets(ids)
 
 def add_comment(target_id, author_id, text, type, ref_id, privacy, likers):
-    return Comment.add(target_id, author_id, text, type, ref_id, privacy, likers)
+    return Comment.add(target_id, author_id, text, type,
+            ref_id=ref_id, privacy=privacy, likers=likers)
     
 def get_comment_by_type(type, target_id, start, limit):
     '''某入口下的评论'''

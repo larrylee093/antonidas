@@ -51,3 +51,6 @@ def unregister_app(app):
     if not app:
         return
     m.delete()
+
+def has_registered(app):
+    return not (get_mapping(app) is None)
