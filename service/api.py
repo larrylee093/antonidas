@@ -2,7 +2,7 @@
 import app
 
 from models.dispatcher import DalaranKeeper
-from models.comment import get_comment, get_comments as get_comments_c
+from models.comment import get_comment as get_comment_c, get_comments as get_comments_c
 from models.consts import CAN_VIEW_ALL
 
 def add_comment(app, target, author, text,
@@ -12,7 +12,7 @@ def add_comment(app, target, author, text,
     return c.to_dict() if c else dict()
 
 def del_comment(author, cid):
-    cmt = get_comment(cid)
+    cmt = get_comment_c(cid)
     if not cmt or cmt.author().uid != author:
         return dict()
     cmt.delete(author)
@@ -41,3 +41,8 @@ def has_registered(app):
         return dict(r=0, msg='Y')
     else:
         return dict(r=0, msg='N')
+
+def get_comment(id):
+    c = get_comment_c(id)
+    return c.to_dict() if c else dict()
+

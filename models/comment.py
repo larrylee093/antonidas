@@ -3,12 +3,17 @@ import marshal
 from datetime import datetime
 
 from sheep.api.users import get_user
+from sheep.api.cache import cache, npcache, backend
 
 from models import db, desc
 from models.base import BaseComment
 from models.mixin.dictionary import DictMixin
 from models.consts import (PRIVACY_MAPPING, CAN_VIEW_ALL, CAN_VIEW_FRIENDS,
         CAN_VIEW_NONE, CAN_VIEW_SELF)
+
+_ANTONIDAS_COMMENT_KEY = 'anto:c:%s'
+_ANTONIDAS_USER_C_KEY = 'anto:ucs:%s:%s:%s'
+_ANTONIDAS_APP_C_KEY = 'anto:acs:%s:%s'
 
 class Comment(db.Model, BaseComment, DictMixin):
     __tablename__ = 'comment'
@@ -29,6 +34,7 @@ class Comment(db.Model, BaseComment, DictMixin):
         self._likers = likers
 
     @classmethod
+    @cache(_ANTONIDAS_COMMENT_KEY % '{id}')
     def get(cls, id):
         return cls.query.get(id)
 
@@ -43,6 +49,8 @@ class Comment(db.Model, BaseComment, DictMixin):
                 ref_id=ref_id, privacy=privacy, likers=likers)
         db.session.add(c)
         db.session.commit()
+        _flush_user_comment(type, author_id, target_id)
+        _flush_app_comment(type, target_id)
         return c
 
     @classmethod
@@ -54,6 +62,9 @@ class Comment(db.Model, BaseComment, DictMixin):
             return
         db.session.delete(self)
         db.session.commit()
+        _flush_comment(self.id)
+        _flush_user_comment(self.type, self.author_id, self.target_id)
+        _flush_app_comment(self.type, self.target_id)
 
     def can_view(self, visitor_id):
         # TODO 现在存在relationship咩
@@ -81,6 +92,7 @@ class Comment(db.Model, BaseComment, DictMixin):
         self.privacy = privacy
         db.session.query(self.__class__).filter_by(id=self.id).update(dict(privacy=privacy))
         db.session.commit()
+        _flush_comment(self.id)
 
     def ref_comment(self):
         return get_comment(self.ref_id) if self.ref_id else None
@@ -95,6 +107,7 @@ class Comment(db.Model, BaseComment, DictMixin):
         self._likers = marshal.dumps(likers)
         db.session.query(self.__class__).filter_by(id=self.id).update(dict(likers=self._likers))
         db.session.commit()
+        _flush_comment(self.id)
 
     def __to_dict__(self):
         return {'privacy': PRIVACY_MAPPING.get(self.privacy, '')}
@@ -116,7 +129,8 @@ def get_comments(ids):
 def add_comment(target_id, author_id, text, type, ref_id, privacy, likers):
     return Comment.add(target_id, author_id, text, type,
             ref_id=ref_id, privacy=privacy, likers=likers)
-    
+
+@npcache(_ANTONIDAS_APP_C_KEY % ('{type}', '{target_id}'))
 def get_comment_by_type(type, target_id, start, limit):
     '''某入口下的评论'''
     query = Comment.get_ids().filter_by(type=type, target_id=target_id).order_by(desc(Comment.id))
@@ -124,9 +138,19 @@ def get_comment_by_type(type, target_id, start, limit):
     n = query.count()
     return n, [r for r, in rs]
 
+@npcache(_ANTONIDAS_USER_C_KEY % ('{type}', '{user_id}', '{target_id}'))
 def get_comment_by_user(type, target_id, user_id, start, limit):
     '''只看楼主(其实随便哪个都可以啦)'''
     query = Comment.get_ids().filter_by(type=type, target_id=target_id, author_id=author_id).order_by(desc(Comment.id))
     rs = query.offset(start).limit(limit).all()
     n = query.count()
     return n, [r for r, in rs]
+
+def _flush_comment(id):
+    backend.delete(_ANTONIDAS_COMMENT_KEY % id)
+
+def _flush_user_comment(type, user_id, target_id):
+    backend.delete(_ANTONIDAS_USER_C_KEY % (type, user_id, target_id))
+
+def _flush_app_comment(type, target_id):
+    backend.delete(_ANTONIDAS_APP_C_KEY % (type, target_id))
